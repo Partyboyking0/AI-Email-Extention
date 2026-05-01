@@ -21,6 +21,10 @@ def override_db_session():
     session = TestingSessionLocal()
     try:
         yield session
+        session.commit()
+    except Exception:
+        session.rollback()
+        raise
     finally:
         session.close()
 
