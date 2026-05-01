@@ -1,0 +1,7 @@
+model_name: google/pegasus-xsum
+method: lora
+target:
+  rouge_1: 0.42
+generation:
+  max_new_tokens: 150
+  bullet_count: 3

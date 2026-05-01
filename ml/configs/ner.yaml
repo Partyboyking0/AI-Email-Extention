@@ -1,0 +1,8 @@
+model_name: dslim/bert-base-NER
+labels:
+  - ACTION
+  - DEADLINE
+  - PERSON
+  - MEETING
+target:
+  entity_f1: 0.85

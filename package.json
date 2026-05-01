@@ -1,0 +1,20 @@
+{
+  "name": "ai-email-extension",
+  "private": true,
+  "version": "0.1.0",
+  "description": "AI email automation assistant with Chrome MV3 extension, FastAPI backend, and ML pipeline.",
+  "scripts": {
+    "dev:extension": "npm --prefix extension run dev",
+    "build:extension": "npm --prefix extension run build",
+    "dev:backend": "uvicorn backend.app.main:app --reload",
+    "test:backend": "pytest backend/tests",
+    "lint:extension": "npm --prefix extension run lint"
+  },
+  "workspaces": [
+    "extension"
+  ],
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3"
+  }
+}

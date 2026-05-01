@@ -1,0 +1,8 @@
+model_name: google/flan-t5-large
+tones:
+  - formal
+  - casual
+  - concise
+rlhf:
+  min_feedback_examples: 200
+  ppo_steps: 1000

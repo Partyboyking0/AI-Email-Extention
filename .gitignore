@@ -1,0 +1,56 @@
+# ── Node / Extension ─────────────────────────────────────────────────────────
+node_modules/
+
+extension/dist/
+extension/.vite/
+
+PROJECT_CONTEXT.md
+
+# ── Python / Backend ──────────────────────────────────────────────────────────
+backend/.venv/
+backend/uvicorn.log
+backend/uvicorn.err.log
+backend/*.db
+
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+
+# ── ML artifacts and data ─────────────────────────────────────────────────────
+ml/artifacts/
+ml/data/raw/*
+ml/data/processed/*
+!ml/data/raw/.gitkeep
+!ml/data/processed/.gitkeep
+
+# Trained model weights and ONNX exports
+*.pt
+*.pth
+*.onnx
+*.ckpt
+*.safetensors
+ml/models/
+
+# ── Secrets and environment ───────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── OS and editor noise ───────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+.vscode/
+.idea/
+*.suo
+*.user
+
+# ── Logs and temp files ───────────────────────────────────────────────────────
+*.log
+*.tmp
+*.bak
+
+# ── Docker ────────────────────────────────────────────────────────────────────
+infra/.docker-data/
