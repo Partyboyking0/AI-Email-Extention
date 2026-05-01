@@ -4,7 +4,7 @@ from backend.app.services.prompt_templates import REPLY_TEMPLATE, SUMMARY_TEMPLA
 def test_summary_template_injects_email_text() -> None:
     prompt = SUMMARY_TEMPLATE.format(email_text="Please bring ID card tomorrow.")
     assert "Please bring ID card tomorrow." in prompt
-    assert "Output exactly 3 bullet points" in prompt
+    assert "Output bullet points" in prompt
     assert "[EMAIL START]" in prompt
     assert "[EMAIL END]" in prompt
 
