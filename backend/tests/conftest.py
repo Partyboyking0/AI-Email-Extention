@@ -3,33 +3,36 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from backend.app.core.database import Base, get_session
+from backend.app.models.user import Base
 from backend.app.main import app
+from backend.app.api.deps import db_session
 
-# In-memory SQLite — shared across the same connection (StaticPool)
-TEST_DATABASE_URL = "sqlite://"
-
-engine = create_engine(
-    TEST_DATABASE_URL,
+# In-memory SQLite, single shared connection across all tests
+TEST_ENGINE = create_engine(
+    "sqlite://",
     connect_args={"check_same_thread": False},
     poolclass=StaticPool,
 )
-TestingSessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
+TestingSessionLocal = sessionmaker(bind=TEST_ENGINE, autocommit=False, autoflush=False)
 
 
-def override_get_session():
-    db = TestingSessionLocal()
+def override_db_session():
+    """Drop-in replacement for the db_session FastAPI dependency."""
+    session = TestingSessionLocal()
     try:
-        yield db
+        yield session
     finally:
-        db.close()
+        session.close()
 
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_db():
-    """Create all tables once for the entire test session."""
-    Base.metadata.create_all(bind=engine)
-    app.dependency_overrides[get_session] = override_get_session
+    # Create all tables once before any test runs
+    Base.metadata.create_all(bind=TEST_ENGINE)
+    # Route all DB calls to the in-memory test database
+    app.dependency_overrides[db_session] = override_db_session
+
     yield
-    Base.metadata.drop_all(bind=engine)
+
+    Base.metadata.drop_all(bind=TEST_ENGINE)
     app.dependency_overrides.clear()
