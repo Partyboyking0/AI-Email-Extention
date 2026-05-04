@@ -56,13 +56,13 @@ HF_API_TOKEN=hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 HF_USE_PROVIDER=true
 HF_PROVIDER_BASE_URL=https://router.huggingface.co/hf-inference/models
 HF_CHAT_BASE_URL=https://router.huggingface.co/v1/chat/completions
-HF_SUMMARIZER_MODEL=sshleifer/distilbart-cnn-12-6
+HF_SUMMARIZER_MODEL=katanemo/Arch-Router-1.5B:hf-inference
 HF_REPLY_MODEL=katanemo/Arch-Router-1.5B:hf-inference
 HF_SUMMARIZER_ENDPOINT=
 HF_REPLY_ENDPOINT=
 ```
 
-This calls Hugging Face's serverless HF Inference provider by model ID. Availability can depend on Hugging Face quotas, model support, and account limits. If the provider call fails, the backend falls back to local summarization/reply generation.
+This uses Hugging Face's chat-completions provider with `HF_REPLY_MODEL` for both summaries and replies. Availability can depend on Hugging Face quotas, model support, and account limits. If the provider call fails, the backend falls back to local summarization/reply generation.
 
 If the check script returns `403 Forbidden`, recreate or edit the token and enable:
 
@@ -79,7 +79,7 @@ Then restart the backend and run:
 Expected model versions after provider inference is active:
 
 ```text
-hf-provider:sshleifer/distilbart-cnn-12-6
+hf-provider:katanemo/Arch-Router-1.5B:hf-inference
 hf-provider:katanemo/Arch-Router-1.5B:hf-inference
 ```
 
@@ -109,6 +109,8 @@ HF_LOCAL_REPLY_MODEL=google/flan-t5-small
 ```
 
 Then restart the backend.
+
+Local HF summarization also uses `HF_LOCAL_REPLY_MODEL`; `HF_LOCAL_SUMMARIZER_MODEL` remains in the config for older setups.
 
 For local HF execution, PyTorch must be installed in the same Python environment that runs FastAPI. If PyTorch is missing, the backend logs the local HF failure and falls back to the deterministic local reply/summarizer so the extension still works.
 

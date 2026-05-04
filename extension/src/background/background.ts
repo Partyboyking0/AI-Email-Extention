@@ -8,7 +8,8 @@ chrome.runtime.onInstalled.addListener(() => {
       mostUsedFeature: "None",
       lastUsedFeature: "None",
       byFeature: {},
-      processedEmailIds: []
+      processedEmailIds: [],
+      lettersReadToday: 0
     }
   });
 });

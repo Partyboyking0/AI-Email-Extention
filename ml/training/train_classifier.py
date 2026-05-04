@@ -37,9 +37,9 @@ def load_jsonl(path: Path, text_column: str, label_column: str, labels: set[str]
     return rows
 
 
-def validate_dataset(config: dict[str, Any]) -> tuple[list[dict[str, str]], dict[str, int]]:
+def validate_dataset(config: dict[str, Any], train_file_override: str | None = None) -> tuple[list[dict[str, str]], dict[str, int]]:
     data_config = config.get("data", {})
-    train_file = Path(data_config.get("train_file", ""))
+    train_file = Path(train_file_override or data_config.get("train_file", ""))
     text_column = data_config.get("text_column", "text")
     label_column = data_config.get("label_column", "label")
     labels = set(config.get("labels", []))
@@ -159,6 +159,7 @@ def train(config: dict[str, Any], rows: list[dict[str, str]], output_dir: Path, 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Fine-tune DistilBERT email classifier.")
     parser.add_argument("--config", default="ml/configs/classifier.yaml")
+    parser.add_argument("--train-file", default=None, help="Override config data.train_file.")
     parser.add_argument("--output-dir", default=None)
     parser.add_argument("--eval-split", type=float, default=0.2)
     parser.add_argument("--seed", type=int, default=42)
@@ -166,7 +167,7 @@ def main() -> None:
     args = parser.parse_args()
 
     config = load_config(args.config)
-    rows, counts = validate_dataset(config)
+    rows, counts = validate_dataset(config, train_file_override=args.train_file)
 
     if args.dry_run:
         print(f"Validated classifier training config: {args.config}")

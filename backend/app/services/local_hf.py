@@ -1,4 +1,5 @@
 from functools import cached_property
+import re
 
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnableLambda
@@ -106,15 +107,15 @@ class LocalHuggingFaceService:
         )
         raw_items = []
         for line in text.splitlines():
-            cleaned = line.strip(" -*\t")
+            cleaned = self._clean_summary_item(line)
             if cleaned and not any(fragment in cleaned.lower() for fragment in banned):
                 raw_items.append(cleaned)
 
         if len(raw_items) < 3:
             raw_items = [
-                part.strip(" -*\t")
+                self._clean_summary_item(part)
                 for part in text.replace(";", ".").split(".")
-                if part.strip(" -*\t") and not any(fragment in part.lower() for fragment in banned)
+                if self._clean_summary_item(part) and not any(fragment in part.lower() for fragment in banned)
             ]
 
         if len(raw_items) < 2:
@@ -124,6 +125,10 @@ class LocalHuggingFaceService:
         while len(bullets) < 3:
             bullets.append("Review the email and confirm the next action")
         return [bullet[0].upper() + bullet[1:] if bullet else bullet for bullet in bullets]
+
+    def _clean_summary_item(self, item: str) -> str:
+        cleaned = item.strip()
+        return re.sub(r"^(?:[-*]\s+|\d+[.)]\s+)", "", cleaned).strip()
 
     def _source_bullets(self, source: str) -> list[str]:
         separators = source.replace("\n", ". ").replace(";", ".")

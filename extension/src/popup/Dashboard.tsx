@@ -1,5 +1,6 @@
 import { RefreshCcw, RotateCcw } from "lucide-react";
 import { useEffect, useState } from "react";
+import { STORAGE_KEYS } from "../shared/constants";
 import { checkBackendHealth } from "../shared/settingsApi";
 import type { UsageStats } from "../shared/types";
 import { Badge } from "./components/Badge";
@@ -27,6 +28,17 @@ export function Dashboard() {
 
   useEffect(() => {
     refreshDashboard();
+  }, []);
+
+  useEffect(() => {
+    function syncUsage(changeSet: Record<string, chrome.storage.StorageChange>, areaName: string) {
+      if (areaName !== "local") return;
+      const usageChange = changeSet[STORAGE_KEYS.usage];
+      if (usageChange?.newValue) setUsage(usageChange.newValue as UsageStats);
+    }
+
+    chrome.storage.onChanged.addListener(syncUsage);
+    return () => chrome.storage.onChanged.removeListener(syncUsage);
   }, []);
 
   return (

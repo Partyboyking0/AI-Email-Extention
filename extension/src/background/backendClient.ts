@@ -1,4 +1,5 @@
 import { DEFAULT_SETTINGS, STORAGE_KEYS } from "../shared/constants";
+import { usageEmailId } from "../shared/emailIdentity";
 import type {
   ClassificationResponse,
   EmailContext,
@@ -51,6 +52,7 @@ interface BackendUsageResponse {
   processed_today: number;
   time_saved_minutes: number;
   most_used_feature: string;
+  last_used_feature: string;
   by_feature: Record<string, number>;
 }
 
@@ -89,11 +91,27 @@ async function getJson<T>(path: string): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+async function deleteJson<T>(path: string): Promise<T> {
+  const settings = await getSettings();
+  const jwt = await getOrCreateDemoJwt(settings.apiBaseUrl);
+  const response = await fetch(`${settings.apiBaseUrl}${path}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${jwt.token}` }
+  });
+
+  if (!response.ok) {
+    throw new Error(`Backend ${path} failed with ${response.status}`);
+  }
+
+  return response.json() as Promise<T>;
+}
+
 function mapUsage(data: BackendUsageResponse): UsageStats {
   return {
     processedToday: data.processed_today,
     timeSavedMinutes: data.time_saved_minutes,
     mostUsedFeature: data.most_used_feature,
+    lastUsedFeature: data.last_used_feature,
     byFeature: data.by_feature
   };
 }
@@ -165,12 +183,21 @@ export async function sendFeedback(payload: FeedbackPayload): Promise<{ status: 
   });
 }
 
-export async function recordUsage(feature: Feature): Promise<UsageStats> {
-  const data = await postJson<BackendUsageResponse>("/api/users/me/usage", { feature });
+export async function recordUsage(feature: Feature, email: EmailContext): Promise<UsageStats> {
+  const data = await postJson<BackendUsageResponse>("/api/users/me/usage", {
+    feature,
+    email_id: usageEmailId(email),
+    letters_read: email.emailText.length
+  });
   return mapUsage(data);
 }
 
 export async function getUsageStats(): Promise<UsageStats> {
   const data = await getJson<BackendUsageResponse>("/api/users/me/usage");
+  return mapUsage(data);
+}
+
+export async function resetUsageStats(): Promise<UsageStats> {
+  const data = await deleteJson<BackendUsageResponse>("/api/users/me/usage");
   return mapUsage(data);
 }

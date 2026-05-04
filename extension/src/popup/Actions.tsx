@@ -1,6 +1,7 @@
 import { CheckSquare, Copy, Loader2, MessageSquareReply, Sparkles, Tags } from "lucide-react";
 import { useState } from "react";
 import { LABEL_COLORS } from "../shared/constants";
+import { renderSummaryBullet } from "../shared/summaryBullet";
 import type { ClassificationResponse, EmailContext, ReplyResponse, SummaryResponse, TaskResponse } from "../shared/types";
 import { usePopupStore } from "./store";
 
@@ -97,7 +98,7 @@ export function Actions() {
             <strong>Summary</strong>
             <span className="inline-muted">{result.context}</span>
           </div>
-          <ul>{result.data.bullets.map((bullet) => <li key={bullet}>{bullet}</li>)}</ul>
+          <ul>{result.data.bullets.map((bullet) => <li key={bullet}>{renderSummaryBullet(bullet)}</li>)}</ul>
           <span className="inline-muted">{result.data.modelVersion}</span>
         </div>
       )}

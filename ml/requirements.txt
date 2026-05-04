@@ -8,3 +8,4 @@ trl>=0.12.1
 wandb>=0.18.7
 optuna>=4.1.0
 pyyaml>=6.0.2
+kaggle>=1.6.17

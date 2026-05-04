@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { CheckSquare, Loader2, MessageSquareReply, Sparkles, ThumbsDown, ThumbsUp } from "lucide-react";
+import { renderSummaryBullet } from "../shared/summaryBullet";
 import type { EmailContext, ReplyResponse, SummaryResponse, TaskResponse, Tone } from "../shared/types";
 
 type PanelState =
@@ -89,7 +90,7 @@ function Toolbar({ email }: { email: EmailContext }) {
           {panel.status === "summary" && (
             <>
               <strong>Summary</strong>
-              <ul>{panel.data.bullets.map((bullet) => <li key={bullet}>{bullet}</li>)}</ul>
+              <ul>{panel.data.bullets.map((bullet) => <li key={bullet}>{renderSummaryBullet(bullet)}</li>)}</ul>
               <p className="muted">{panel.data.modelVersion}</p>
             </>
           )}

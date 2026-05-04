@@ -23,7 +23,7 @@ class InferenceService:
         self.task_extractor = HeuristicTaskExtractor()
         self.local_summarizer = LocalSummarizer()
         self.local_reply = LocalReplyGenerator()
-        self.local_hf = LocalHuggingFaceService(settings.hf_local_summarizer_model, settings.hf_local_reply_model)
+        self.local_hf = LocalHuggingFaceService(settings.hf_local_reply_model, settings.hf_local_reply_model)
 
     async def summarize(self, email_text: str, user_id: str) -> SummaryResponse:
         started = time.perf_counter()
@@ -45,15 +45,19 @@ class InferenceService:
                     logger.warning("HF summarizer endpoint failed; falling back.", exc_info=exc)
             if settings.hf_use_provider and settings.hf_api_token:
                 try:
-                    generated = await self.hf.generate_with_provider(
-                        str(settings.hf_provider_base_url),
-                        settings.hf_summarizer_model,
-                        self._summarizer_source(email_text),
-                        parameters={"max_new_tokens": 150},
+                    generated = await self.hf.chat_completion(
+                        str(settings.hf_chat_base_url),
+                        settings.hf_reply_model,
+                        self.prompts.summary_prompt(self._summarizer_source(email_text)),
+                        max_tokens=150,
+                        system_prompt=(
+                            "You are an email summarization assistant. "
+                            "Return exactly three concise bullets grounded only in the email."
+                        ),
                     )
                     return {
                         "bullets": self._to_three_bullets(generated),
-                        "model_version": f"hf-provider:{settings.hf_summarizer_model}",
+                        "model_version": f"hf-provider:{settings.hf_reply_model}",
                     }
                 except Exception as exc:
                     logger.warning("HF summarizer provider failed; falling back.", exc_info=exc)
@@ -61,7 +65,7 @@ class InferenceService:
                 try:
                     return {
                         "bullets": self.local_hf.summarize(email_text),
-                        "model_version": f"hf-local:{settings.hf_local_summarizer_model}",
+                        "model_version": f"hf-local:{settings.hf_local_reply_model}",
                     }
                 except Exception as exc:
                     logger.warning("Local HF summarizer failed; falling back.", exc_info=exc)
@@ -163,21 +167,25 @@ class InferenceService:
             "tags to choose",
         )
         candidates = [
-            line.strip(" -*\t")
+            self._clean_summary_item(line)
             for line in generated.splitlines()
-            if line.strip(" -*\t") and not any(fragment in line.lower() for fragment in banned_fragments)
+            if self._clean_summary_item(line) and not any(fragment in line.lower() for fragment in banned_fragments)
         ]
         if len(candidates) < 3:
             candidates = [
-                part.strip(" -*\t")
+                self._clean_summary_item(part)
                 for part in generated.split(".")
-                if part.strip(" -*\t") and not any(fragment in part.lower() for fragment in banned_fragments)
+                if self._clean_summary_item(part) and not any(fragment in part.lower() for fragment in banned_fragments)
             ]
 
         bullets = candidates[:3]
         while len(bullets) < 3:
             bullets.append("Review the email context and confirm the next action.")
         return bullets
+
+    def _clean_summary_item(self, item: str) -> str:
+        cleaned = item.strip()
+        return re.sub(r"^(?:[-*]\s+|\d+[.)]\s+)", "", cleaned).strip()
 
     def _summarizer_source(self, email_text: str) -> str:
         return email_text[:12_000]

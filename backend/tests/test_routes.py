@@ -88,9 +88,36 @@ def test_feedback_route() -> None:
 
 
 def test_usage_routes() -> None:
-    recorded = client.post("/api/users/me/usage", json={"feature": "summarize"})
+    client.delete("/api/users/me/usage")
+
+    recorded = client.post(
+        "/api/users/me/usage",
+        json={"feature": "summarize", "email_id": "usage-email-1", "letters_read": 1780},
+    )
     assert recorded.status_code == 200
-    assert recorded.json()["processed_today"] >= 1
+    body = recorded.json()
+    assert body["processed_today"] == 1
+    assert body["time_saved_minutes"] == 2
+    assert body["last_used_feature"] == "Summarize"
+
+    repeated_email = client.post(
+        "/api/users/me/usage",
+        json={"feature": "reply", "email_id": "usage-email-1", "letters_read": 1780},
+    )
+    assert repeated_email.status_code == 200
+    body = repeated_email.json()
+    assert body["processed_today"] == 1
+    assert body["time_saved_minutes"] == 2
+    assert body["last_used_feature"] == "Reply"
+
+    new_email_same_thread = client.post(
+        "/api/users/me/usage",
+        json={"feature": "summarize", "email_id": "usage-email-1:new-body-hash", "letters_read": 985},
+    )
+    assert new_email_same_thread.status_code == 200
+    body = new_email_same_thread.json()
+    assert body["processed_today"] == 2
+    assert body["time_saved_minutes"] == 4
 
     stats = client.get("/api/users/me/usage")
     assert stats.status_code == 200

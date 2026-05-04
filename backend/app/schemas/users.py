@@ -25,10 +25,13 @@ class FeedbackRequest(BaseModel):
 
 class UsageRequest(BaseModel):
     feature: Feature
+    email_id: str | None = Field(default=None, max_length=128)
+    letters_read: int = Field(default=0, ge=0, le=50_000)
 
 
 class UsageStatsResponse(BaseModel):
     processed_today: int
     time_saved_minutes: int
     most_used_feature: str
+    last_used_feature: str
     by_feature: dict[str, int]

@@ -5,11 +5,12 @@ SUMMARY_TEMPLATE = PromptTemplate.from_template(
     """<s>Summarize the following email only. Output bullet points..
 
 Output format:
+- **[Context]** content
 - **[Tag]** content
 - **[Tag]** content
 - **[Tag]** content
 
-Tags to choose from: Context, Action Required, Deadline, Decision Needed, Key Info, Next Step
+First tag must be context and rest Tags to choose from: Action Required, Deadline, Decision Needed, Key Info, Next Step
 
 [EMAIL START]
 {email_text}
@@ -27,7 +28,7 @@ RULES:
 - Do not copy the sender's language or repeat their offer back to them.
 - Do not invent names, links, dates, numbers, or facts not in the email.
 - No subject line, no signature block.
-- Length: 60-120 words.
+- Length: 100 words.
 - End with a clear next step or question.
 
 TONE: {tone}

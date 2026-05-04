@@ -53,4 +53,5 @@ export interface UsageStats {
   lastUsedFeature?: string;
   byFeature: Record<string, number>;
   processedEmailIds?: string[];
+  lettersReadToday?: number;
 }

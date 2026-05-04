@@ -49,7 +49,15 @@ async def record_usage(
     user: dict[str, str] = Depends(current_user),
     session: Session = Depends(db_session),
 ) -> UsageStatsResponse:
-    return UserService(session).record_usage(user["sub"], payload.feature)
+    return UserService(session).record_usage(user["sub"], payload)
+
+
+@router.delete("/users/me/usage", response_model=UsageStatsResponse)
+async def reset_usage(
+    user: dict[str, str] = Depends(current_user),
+    session: Session = Depends(db_session),
+) -> UsageStatsResponse:
+    return UserService(session).reset_usage(user["sub"])
 
 
 @router.delete("/users/me", status_code=status.HTTP_202_ACCEPTED)

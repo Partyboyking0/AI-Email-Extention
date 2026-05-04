@@ -85,15 +85,144 @@ The extension now checks for:
 extension/public/models/classifier/model.onnx
 ```
 
-When the trained ONNX classifier is exported, the popup/background flow does not need to change. The next implementation step is to wire tokenization and `onnxruntime-web` inference into `extension/src/shared/classifier.ts`.
+The trained ONNX classifier now exists locally. The popup/background flow does not need to change. The next implementation step is to wire tokenization and `onnxruntime-web` inference into `extension/src/shared/classifier.ts`.
 
-Expected future model artifacts:
+Current local model artifacts:
 
 ```text
 model.onnx
 tokenizer.json
 labels.json
 ```
+
+The ONNX file is intentionally ignored by git because it is a large binary artifact.
+
+## Kaggle Training Run
+
+Downloaded dataset:
+
+```text
+saiash/spam-and-ham-email-classification-dataset
+```
+
+Kaggle reported license:
+
+```text
+CC0-1.0
+```
+
+Local download/normalization script:
+
+```text
+ml/data/download_kaggle_classifier.py
+```
+
+Generated local data files:
+
+```text
+ml/data/raw/kaggle_spamassassin/
+ml/data/processed/kaggle_spam_ham.jsonl
+ml/data/processed/classifier_train_kaggle.jsonl
+```
+
+Training command:
+
+```powershell
+backend\.venv\Scripts\python.exe ml\training\train_classifier.py --config ml\configs\classifier.yaml --train-file ml\data\processed\classifier_train_kaggle.jsonl --output-dir ml\artifacts\classifier_kaggle
+```
+
+Export command:
+
+```powershell
+backend\.venv\Scripts\python.exe ml\export\export_onnx.py --model-dir ml\artifacts\classifier_kaggle --out-dir extension\public\models\classifier --quantize
+```
+
+Dataset summary:
+
+```text
+Combined examples: 1996
+spam: 472
+low-priority: 1502
+opportunity: 6
+other app labels: small seed examples
+```
+
+Training result:
+
+```text
+Accuracy: about 0.978
+Macro F1: about 0.196
+```
+
+Quality note: this public Kaggle dataset is strong for spam/ham training, but it is not balanced for the app's 10-label taxonomy. The trained model should be treated as a first real artifact, not the final production classifier.
+
+## Synthetic Balance Run
+
+Generated 200 synthetic emails for each classifier label:
+
+```text
+urgent
+follow-up
+action-required
+low-priority
+finance
+newsletter
+opportunity
+spam
+work
+personal
+```
+
+Generator script:
+
+```text
+ml/data/generate_synthetic_classifier.py
+```
+
+Generated local files:
+
+```text
+ml/data/processed/classifier_synthetic_200_each.jsonl
+ml/data/processed/classifier_train_kaggle_synthetic.jsonl
+```
+
+Generation command:
+
+```powershell
+backend\.venv\Scripts\python.exe ml\data\generate_synthetic_classifier.py --per-label 200
+```
+
+Merged dataset summary:
+
+```text
+Combined examples: 3996
+Synthetic examples: 2000
+urgent: 202
+follow-up: 202
+action-required: 202
+low-priority: 1702
+finance: 202
+newsletter: 202
+opportunity: 206
+spam: 674
+work: 202
+personal: 202
+```
+
+Retraining command:
+
+```powershell
+backend\.venv\Scripts\python.exe ml\training\train_classifier.py --config ml\configs\classifier.yaml --train-file ml\data\processed\classifier_train_kaggle_synthetic.jsonl --output-dir ml\artifacts\classifier_kaggle_synthetic
+```
+
+Retraining result:
+
+```text
+Accuracy: about 0.996
+Macro F1: about 0.996
+```
+
+Quality note: this score is useful for confirming the pipeline works, but it is partly inflated because the new category data is synthetic and template-based. Real labeled category data is still needed before treating this as a production classifier.
 
 Train the classifier when enough labeled examples are available:
 
@@ -132,8 +261,7 @@ Macro F1: 1.000
 
 ## Next Steps
 
-1. Prepare labeled classifier data.
-2. Fine-tune the classifier in `ml/training/train_classifier.py`.
-3. Export and quantize with `ml/export/export_onnx.py`.
-4. Add tokenizer + labels artifacts to `extension/public/models/classifier/`.
-5. Replace the keyword fallback path with real ONNX Runtime Web inference.
+1. Replace the keyword fallback path with real ONNX Runtime Web inference.
+2. Add more balanced app-specific labeled emails.
+3. Retrain the classifier after adding balanced data.
+4. Re-export and quantize with `ml/export/export_onnx.py`.

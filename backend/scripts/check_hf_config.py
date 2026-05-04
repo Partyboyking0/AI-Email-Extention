@@ -8,10 +8,12 @@ sys.path.append(str(Path(__file__).resolve().parents[2]))
 
 from backend.app.core.config import settings
 from backend.app.services.hf_client import HuggingFaceInferenceClient
+from backend.app.services.prompt_engine import PromptEngine
 
 
 async def main() -> None:
     client = HuggingFaceInferenceClient(settings.hf_api_token)
+    prompts = PromptEngine()
     print("HF_API_TOKEN:", "set" if settings.hf_api_token else "missing")
     print("HF_USE_PROVIDER:", settings.hf_use_provider)
     print("HF_PROVIDER_BASE_URL:", settings.hf_provider_base_url)
@@ -41,13 +43,17 @@ async def main() -> None:
 
     if settings.hf_use_provider and settings.hf_api_token:
         try:
-            provider_summary = await client.generate_with_provider(
-                str(settings.hf_provider_base_url),
-                settings.hf_summarizer_model,
-                "Summarize this email in 3 bullets: Please review the proposal by Friday and confirm next steps.",
-                parameters={"max_new_tokens": 120},
+            provider_summary = await client.chat_completion(
+                str(settings.hf_chat_base_url),
+                settings.hf_reply_model,
+                prompts.summary_prompt("Please review the proposal by Friday and confirm next steps."),
+                max_tokens=120,
+                system_prompt=(
+                    "You are an email summarization assistant. "
+                    "Return exactly three concise bullets grounded only in the email."
+                ),
             )
-            print("\nProvider summarizer response:")
+            print("\nProvider summarizer response using HF_REPLY_MODEL:")
             print(provider_summary[:800])
 
             provider_reply = await client.chat_completion(
